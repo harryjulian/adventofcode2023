@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 enum Colour {
     Red,
     Green,
@@ -36,13 +36,11 @@ fn _construct_game(game_str: String) -> Game {
     // Split draws
     let draws: Vec<&str> = s.split(";").map(|s| s.trim()).collect();
 
-    // For each set of draws,
     let mut result: Vec<Vec<Draw>> = vec![];
     for d in draws.iter() {
         let mut out: Vec<Draw> = vec![];
         let i: Vec<&str> = d.split(" ").collect();
         for j in i.windows(2).step_by(2) {
-            dbg!(&j);
             let n = str::parse::<i32>(j[0]).unwrap();
             let col = match j[1] {
                 "blue" => Colour::Blue,
@@ -54,8 +52,6 @@ fn _construct_game(game_str: String) -> Game {
         }
         result.push(out);
     }
-
-    dbg!(&result);
     Game {
         game_n: game_id,
         draws: result,
@@ -74,6 +70,30 @@ fn _validate_draws(game: &Game, max_draw: &HashMap<Colour, i32>) -> bool {
     true
 }
 
+fn _find_minimum_set_power(game: Game) -> i32 {
+    // Create hash map to hold max for each colour
+    let mut hm: HashMap<Colour, i32> = HashMap::new();
+
+    // Iterate through each draw to find the max for each colours
+    for draw in game.draws.iter() {
+        for d in draw.iter() {
+            let curr_value = hm.get(&d.colour);
+            match curr_value {
+                Some(x) => {
+                    if d.n > *curr_value.unwrap() {
+                        hm.insert(d.colour, d.n);
+                        continue;
+                    };
+                }
+                None => {
+                    hm.insert(d.colour, d.n);
+                }
+            }
+        }
+    }
+    hm.values().into_iter().fold(1, |acc, num| acc * num)
+}
+
 fn solve_part_one() -> i32 {
     let puzzle_input: Vec<&str> = include_str!("../data/input.txt").split("\n").collect();
     let max_draw: HashMap<Colour, i32> =
@@ -87,6 +107,16 @@ fn solve_part_one() -> i32 {
     result
 }
 
+fn solve_part_two() -> i32 {
+    let puzzle_input: Vec<&str> = include_str!("../data/input.txt").split("\n").collect();
+    let result: i32 = puzzle_input
+        .into_iter()
+        .map(|g| _find_minimum_set_power(_construct_game(String::from(g))))
+        .sum();
+    result
+}
+
 fn main() {
     println!("The answer to part one is {:?}", solve_part_one());
+    println!("The answer to part two is {:?}", solve_part_two());
 }
