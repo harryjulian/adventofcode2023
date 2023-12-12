@@ -1,4 +1,4 @@
-fn extrapolate_sequence(sequence: Vec<i32>) -> i32 {
+fn extrapolate_sequence(sequence: Vec<i32>) -> (i32, i32) {
     let mut extrapolations: Vec<Vec<i32>> = vec![sequence];
 
     // Traverse Sequence to find lowest level
@@ -12,13 +12,22 @@ fn extrapolate_sequence(sequence: Vec<i32>) -> i32 {
         extrapolations.push(next_sequence);
     }
     // Extrapolate to end of sequence
-    extrapolations
-        .into_iter()
+    let forwards = extrapolations
+        .iter()
         .rev()
-        .fold(0, |state, current| state + current.last().unwrap())
+        .fold(0, |state, current| state + current.last().unwrap());
+
+    // Extrapolate to the beginning of the sequence
+    let backwards = extrapolations
+        .iter()
+        .rev()
+        .fold(0, |state, current| current.first().unwrap() - state);
+
+    // Return tuple for both answers
+    (forwards, backwards)
 }
 
-fn solve_part_one() -> i32 {
+fn main() {
     let puzzle_input: Vec<_> = include_str!("../data/input.txt")
         .split('\n')
         .map(|l| {
@@ -27,13 +36,12 @@ fn solve_part_one() -> i32 {
                 .collect::<Vec<i32>>()
         })
         .collect();
-    puzzle_input
+    let sequences: Vec<(i32, i32)> = puzzle_input
         .into_iter()
         .map(|s| extrapolate_sequence(s))
-        .sum()
-}
-
-fn main() {
-    println!("The answer to part one is {:?}", solve_part_one());
-    //println!("The answer to part two is {:?}", solve_part_two());
+        .collect();
+    let p1: i32 = sequences.iter().map(|x| x.0).sum();
+    let p2: i32 = sequences.iter().map(|x| x.1).sum();
+    println!("The answer to part one is: {:?}", p1);
+    println!("The answer to part two is: {:?}", p2);
 }
